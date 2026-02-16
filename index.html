@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>For Us — 9·9·2025</title>
+  <meta name="description" content="A romantic countdown to 9/9/2025 that transforms into an anniversary timer with music and floating hearts." />
+  <style>
+    :root{
+      --bg1:#0b0a0f; /* deep night */
+      --bg2:#23122b; /* plum */
+      --accent:#ff5e7a; /* strawberry */
+      --accent-2:#ff89a6; /* blush */
+      --glow: 0 0 30px rgba(255, 137, 166, .45);
+      --white: #fff;
+    }
+
+    /* Page layout */
+    html,body{ height:100%; margin:0; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--white);
+      background: radial-gradient(1000px 600px at 10% 10%, #2b1734 0%, transparent 60%),
+                  radial-gradient(900px 800px at 80% 20%, #1c0f24 0%, transparent 70%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      display:grid;
+      place-items:center;
+      overflow-x:hidden;
+    }
+
+    .wrap{
+      width:min(1000px, 92vw);
+      text-align:center;
+      padding: clamp(20px, 6vw, 56px);
+      position:relative;
+    }
+
+    /* Headline */
+    h1{
+      font-weight:900;
+      font-size:clamp(28px, 7vw, 64px);
+      letter-spacing:.02em;
+      margin:0 0 8px;
+      background:linear-gradient(180deg, #fff, #ffe6ee 60%, var(--accent-2));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      text-shadow:0 2px 18px rgba(255, 137, 166, .35);
+    }
+    .sub{
+      margin:6px 0 24px; opacity:.9; font-weight:500; font-size:clamp(14px, 2.5vw, 18px);
+    }
+
+    /* Timer cards */
+    .timer{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .card{
+      min-width:110px; padding:18px 16px; border-radius:20px; background:rgba(255,255,255,.06); backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25), var(--glow);
+    }
+    .num{ font-size:clamp(28px, 6vw, 48px); font-weight:800; line-height:1; }
+    .lab{ font-size:12px; letter-spacing:.2em; text-transform:uppercase; opacity:.8; }
+
+    /* CTA / message */
+    .note{ margin:18px auto 10px; max-width:720px; opacity:.95; }
+
+    /* Heart/Firework layers */
+    .hearts, .sparks{ position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+
+    .heart{
+      position:absolute; width:18px; height:18px;
+      background: radial-gradient(circle at 30% 30%, #fff8 0 8px, transparent 10px), var(--accent);
+      transform: rotate(45deg);
+      border-radius:4px;
+      filter: drop-shadow(0 0 6px rgba(255, 137, 166,.7));
+      animation: floatUp var(--dur) linear forwards;
+    }
+    .heart:before, .heart:after{
+      content:""; position:absolute; width:18px; height:18px; background:var(--accent);
+      border-radius:50%;
+    }
+    .heart:before{ left:-9px; }
+    .heart:after{ top:-9px; }
+    @keyframes floatUp{ to{ transform: translateY(-110vh) rotate(45deg); opacity:0; } }
+
+    /* Anniversary theme tweaks */
+    .anniv body{}
+    .ribbon{
+      display:inline-block; padding:8px 14px; border-radius:999px;
+      background: linear-gradient(90deg, #ff87a1, #ffa0b9, #ffd1dc);
+      color:#3a0d1f; font-weight:700; box-shadow: var(--glow);
+      margin-bottom:14px;
+    }
+
+    /* Player & controls */
+    .audio-wrap{ margin-top:20px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; opacity:.95; }
+    button, .ghost{
+      appearance:none; border:none; cursor:pointer;
+      padding:12px 16px; border-radius:999px; font-weight:700;
+      background: rgba(255,255,255,.12); color:#fff; backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      transition: transform .08s ease, background .2s ease;
+    }
+    button:hover{ transform: translateY(-2px); background: rgba(255,255,255,.16); }
+    .ghost{ opacity:.8; }
+
+    /* Autoplay helper overlay (if browser blocks audio) */
+    .overlay{
+      position:fixed; inset:0; background:linear-gradient(135deg, rgba(19,14,23,.75), rgba(26,9,22,.75));
+      display:none; place-items:center; text-align:center; z-index:1000; backdrop-filter: blur(4px);
+    }
+    .overlay.show{ display:grid; }
+    .overlay .panel{
+      background: rgba(255,255,255,.08); padding:28px; border-radius:24px; box-shadow: var(--glow);
+      max-width:520px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+  <div class="sparks" id="sparks"></div>
+
+  <div class="wrap">
+    <div class="ribbon" id="modeRibbon">Countdown to our day</div>
+    <h1 id="headline">9 · 9 · 2025</h1>
+    <div class="sub" id="subtext">I’m counting every heartbeat until I get to call you mine.</div>
+
+    <div class="timer" id="timer">
+      <div class="card"><div class="num" id="d">--</div><div class="lab">Days</div></div>
+      <div class="card"><div class="num" id="h">--</div><div class="lab">Hours</div></div>
+      <div class="card"><div class="num" id="m">--</div><div class="lab">Minutes</div></div>
+      <div class="card"><div class="num" id="s">--</div><div class="lab">Seconds</div></div>
+    </div>
+
+    <p class="note" id="note">On 9 September 2025, this page will transform to our Anniversary Mode and start counting the time we’ve been together. ✨</p>
+
+    <div class="audio-wrap">
+      <button id="playPause">⏸ Pause music</button>
+      <span class="ghost" id="nowPlaying">Now Playing: —</span>
+    </div>
+
+    <!-- Hidden / visible native audio element -->
+    <audio id="player" preload="auto"></audio>
+  </div>
+
+  <!-- Autoplay helper (appears on first visit if blocked) -->
+  <div class="overlay" id="autoplayOverlay">
+    <div class="panel">
+      <h2>Tap to start the music 🎶</h2>
+      <p>Some browsers block autoplay with sound. Tap below once and the playlist will play automatically after that.</p>
+      <button id="startMusic">Start Music</button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * 🎶 MUSIC SETUP — IMPORTANT
+     * Replace the placeholder URLs below with your own MP3 file links.
+     * Examples:
+     *   - host your mp3 files and paste their URLs
+     *   - or use files from your Google Drive/Dropbox with direct links
+     * NOTE: Do NOT use YouTube/Spotify links directly here — they don’t work as <audio> sources.
+     */
+    const PLAYLIST = [
+      // Replace these with your real MP3 URLs
+      // "https://open.spotify.com/album/5bZT73mZyTvxu3de7BBhEu?si=Eg1CcG1ZQyq0z1Om8rNS0g",
+      // "https://your-host/Stephen_Sanchez-Until_I_Found_You.mp3",
+      // "https://your-host/I_Think_They_Call_This_Love.mp3",
+    ];
+
+    const TARGET = new Date('2025-09-09T00:00:00+08:00'); // Asia/Singapore time
+
+    const els = {
+      d: document.getElementById('d'),
+      h: document.getElementById('h'),
+      m: document.getElementById('m'),
+      s: document.getElementById('s'),
+      timer: document.getElementById('timer'),
+      headline: document.getElementById('headline'),
+      sub: document.getElementById('subtext'),
+      note: document.getElementById('note'),
+      modeRibbon: document.getElementById('modeRibbon'),
+      playPause: document.getElementById('playPause'),
+      nowPlaying: document.getElementById('nowPlaying'),
+      overlay: document.getElementById('autoplayOverlay'),
+      startMusic: document.getElementById('startMusic'),
+      player: document.getElementById('player'),
+      hearts: document.getElementById('hearts')
+    };
+
+    // ♥️ Floating hearts — lightweight particles
+    function spawnHeart(){
+      const h = document.createElement('div');
+      h.className='heart';
+      const size = 12 + Math.random()*18; // 12-30px
+      h.style.width = h.style.height = size + 'px';
+      h.style.left = (Math.random()*100) + 'vw';
+      h.style.bottom = '-40px';
+      h.style.setProperty('--dur', (8 + Math.random()*10) + 's');
+      h.style.opacity = 0.6 + Math.random()*0.4;
+      els.hearts.appendChild(h);
+      setTimeout(()=>h.remove(), 20000);
+    }
+    setInterval(spawnHeart, 700);
+    for(let i=0;i<12;i++) setTimeout(spawnHeart, i*200);
+
+    // ⏱ Countdown / Anniversary logic
+    function pad(n){ return String(Math.floor(n)).padStart(2,'0'); }
+
+    function setCountdown(ms){
+      const total = Math.max(0, ms);
+      const s = Math.floor(total/1000)%60;
+      const m = Math.floor(total/1000/60)%60;
+      const h = Math.floor(total/1000/60/60)%24;
+      const d = Math.floor(total/1000/60/60/24);
+      els.d.textContent = d;
+      els.h.textContent = pad(h);
+      els.m.textContent = pad(m);
+      els.s.textContent = pad(s);
+    }
+
+    function setSince(ms){
+      // Show total days, hours, minutes since the moment
+      const s = Math.floor(ms/1000)%60;
+      const m = Math.floor(ms/1000/60)%60;
+      const h = Math.floor(ms/1000/60/60)%24;
+      const d = Math.floor(ms/1000/60/60/24);
+      els.d.textContent = d;
+      els.h.textContent = pad(h);
+      els.m.textContent = pad(m);
+      els.s.textContent = pad(s);
+    }
+
+    let anniversaryMode = false;
+    function update(){
+      const now = new Date();
+      const diff = TARGET - now;
+      if(diff > 0){
+        if(anniversaryMode){ switchToCountdown(); }
+        setCountdown(diff);
+      }else{
+        if(!anniversaryMode){ switchToAnniversary(); celebrate(); }
+        setSince(now - TARGET);
+      }
+    }
+
+    function switchToAnniversary(){
+      anniversaryMode = true;
+      els.modeRibbon.textContent = 'Anniversary Mode';
+      els.headline.textContent = 'Us, from 9·9·2025';
+      els.sub.textContent = 'Counting every beautiful moment since we began.';
+      els.note.textContent = 'Happy Anniversary — here\'s to forever. 💞';
+      document.title = 'Our Anniversary ✨';
+    }
+
+    function switchToCountdown(){
+      anniversaryMode = false;
+      els.modeRibbon.textContent = 'Countdown to our day';
+      els.headline.textContent = '9 · 9 · 2025';
+      els.sub.textContent = 'I\'m counting every heartbeat until I get to call you mine.';
+      els.note.textContent = 'On 9 September 2025, this page will transform to our Anniversary Mode and start counting the time we’ve been together. ✨';
+      document.title = 'For Us — 9·9·2025';
+    }
+
+    setInterval(update, 1000);
+    update();
+
+    // 🎉 Simple celebration burst when switching to anniversary
+    function celebrate(){
+      for(let i=0;i<60;i++) setTimeout(spawnHeart, i*60);
+      // Optional: add small CSS flash
+      document.body.animate([
+        { filter:'brightness(1)' },
+        { filter:'brightness(1.4)' },
+        { filter:'brightness(1)' }
+      ], { duration: 1200 });
+    }
+
+    // 🎧 Audio player + playlist
+    const player = els.player;
+    let index = 0; let userInteracted = false;
+    player.volume = 0.9; player.loop = false; // we handle looping across tracks
+
+    function loadTrack(i){
+      if(!PLAYLIST.length){
+        els.nowPlaying.textContent = 'Add your songs to PLAYLIST in the code';
+        return;
+      }
+      index = (i+PLAYLIST.length)%PLAYLIST.length;
+      player.src = PLAYLIST[index];
+      const pretty = decodeURIComponent(PLAYLIST[index].split('/').pop() || 'Love Song');
+      els.nowPlaying.textContent = 'Now Playing: ' + pretty.replace(/[_-]/g, ' ').replace(/\.mp3$/i,'');
+    }
+
+    function play(){ player.play().then(()=>{
+      els.playPause.textContent = '⏸ Pause music';
+    }).catch(()=>{
+      // Autoplay blocked — show overlay prompt once
+      if(!userInteracted){ els.overlay.classList.add('show'); }
+    }); }
+
+    function pause(){ player.pause(); els.playPause.textContent = '▶️ Play music'; }
+
+    player.addEventListener('ended', ()=>{ loadTrack(index+1); play(); });
+
+    els.playPause.addEventListener('click', ()=>{
+      if(player.paused){ play(); } else { pause(); }
+    });
+
+    els.startMusic.addEventListener('click', ()=>{
+      userInteracted = true;
+      els.overlay.classList.remove('show');
+      if(!PLAYLIST.length){
+        // still no tracks — do nothing
+        return;
+      }
+      if(!player.src) loadTrack(index);
+      play();
+    });
+
+    // Try to autoplay on load (may be blocked)
+    if(PLAYLIST.length){
+      loadTrack(index);
+      play();
+    }
+
+    // Also allow starting by any keypress or click on the page (once)
+    function unlock(){
+      if(userInteracted) return;
+      userInteracted = true;
+      if(PLAYLIST.length && player.paused){
+        if(!player.src) loadTrack(index);
+        play();
+      }
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('keydown', unlock);
+    }
+    window.addEventListener('click', unlock);
+    window.addEventListener('keydown', unlock);
+  </script>
+</body>
+</html>
